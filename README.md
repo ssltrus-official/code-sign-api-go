@@ -224,5 +224,7 @@ go test -mod=readonly -count=1 -run '^TestClient$/^GetVersion$' ./...
 Do not commit `.env` or put real credentials in examples or documentation. A skipped test does not verify the real API.
 
 GitHub Actions checks dependency consistency, formatting, vet, lint, compilation and tests on PRs, branch pushes and `v*` tags.
-CI does not configure `.env` or service credentials and does not create releases.
+CI does not configure `.env` or service credentials. After checks pass for a pushed `v*` tag,
+it creates a GitHub Release with generated notes and downloads the tagged module through
+`proxy.golang.org` and `sum.golang.org` to warm Go module services.
 Dependabot checks Go modules and GitHub Actions weekly.

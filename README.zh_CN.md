@@ -217,4 +217,6 @@ go test -mod=readonly -count=1 -run '^TestClient$/^GetVersion$' ./...
 `.env` 不纳入 Git，示例和文档不保存真实凭证。跳过测试不代表真实接口已验证。
 
 GitHub Actions 对 PR、分支 push 和 `v*` tag 执行依赖一致性、格式、vet、lint、编译和测试检查。
-CI 不配置 `.env` 或服务凭证，不创建 Release。Dependabot 每周检查 Go modules 和 GitHub Actions。
+CI 不配置 `.env` 或服务凭证。推送 `v*` 标签且检查通过后，自动创建 GitHub Release 并生成发布说明，
+随后通过 `proxy.golang.org` 和 `sum.golang.org` 下载标签对应的模块版本，预热 Go 模块服务。
+Dependabot 每周检查 Go modules 和 GitHub Actions。
