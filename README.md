@@ -228,3 +228,10 @@ CI does not configure `.env` or service credentials. After checks pass for a pus
 it creates a GitHub Release with generated notes and downloads the tagged module through
 `proxy.golang.org` and `sum.golang.org` to warm Go module services.
 Dependabot checks Go modules and GitHub Actions weekly.
+
+## License
+
+Copyright 2026 sslTrus.
+
+The Go API client source code and documentation are licensed under the
+[Apache License 2.0](LICENSE).

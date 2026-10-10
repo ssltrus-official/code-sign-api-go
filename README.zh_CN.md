@@ -220,3 +220,9 @@ GitHub Actions 对 PR、分支 push 和 `v*` tag 执行依赖一致性、格式�
 CI 不配置 `.env` 或服务凭证。推送 `v*` 标签且检查通过后，自动创建 GitHub Release 并生成发布说明，
 随后通过 `proxy.golang.org` 和 `sum.golang.org` 下载标签对应的模块版本，预热 Go 模块服务。
 Dependabot 每周检查 Go modules 和 GitHub Actions。
+
+## 许可证
+
+Copyright 2026 sslTrus.
+
+Go API 客户端源码和文档采用 [Apache License 2.0](LICENSE)。
