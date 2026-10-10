@@ -1,0 +1,48 @@
+name: Golang
+
+on:
+  push:
+    branches:
+      - "**"
+    tags:
+      - "v*"
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Setup Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Tidy
+        run: make tidy
+      - name: Verify tidiness
+        run: git diff --exit-code -- go.mod go.sum
+      - name: Check formatting
+        run: make format-check
+      - name: Vet
+        run: make vet
+      - name: Lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.14.0
+          args: --config .golangci.yml
+      - name: Compile
+        run: make compile
+      - name: Install gotestsum
+        run: go install gotest.tools/gotestsum@latest
+      - name: Test
+        run: make test
