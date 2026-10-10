@@ -77,6 +77,12 @@ if err != nil {
 _ = certs
 ```
 
+## Swagger documentation
+
+Import [docs/api.swagger.yaml](docs/api.swagger.yaml) into Swagger UI, Swagger
+Editor or Apifox to view the HTTP API documentation.
+See [the usage notes](docs/README.md) for authentication and signing constraints.
+
 ## Raw hash signing
 
 See the [public API reference](https://help.racent.com/zh/remote-code-signing/integration-guide/codesign-api-reference/) for the signing contract.

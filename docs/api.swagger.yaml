@@ -1,0 +1,603 @@
+swagger: "2.0"
+info:
+  title: sslTrus Remote Code Signing API
+  description: 远程代码签名 HTTP API。全部接口使用 POST 和 JSON。除版本查询外，使用 HTTP Basic Auth，用户名为 Access Key，密码为 Access Secret。成功响应包含 code、message、data、errors 和 request_id；code=0 表示业务成功，非零表示失败，不能只根据 HTTP 状态码判断成功。业务错误可能在 HTTP 200 中返回，错误响应的 data 和追踪字段可能缺失。JSON 请求同时接受 lowerCamelCase 和原始 snake_case 字段名，响应使用 lowerCamelCase；request_id 为请求追踪 ID，保留 snake_case。生产环境使用 HTTPS。
+  version: v1
+tags:
+  - name: 代码签名
+    description: 远程代码签名接口。
+host: ssl.face.racent.com
+schemes:
+  - https
+consumes:
+  - application/json
+produces:
+  - application/json
+paths:
+  /v1/codesign/version:
+    post:
+      summary: 获取版本
+      description: 查询客户端版本，无需认证。type 为 1（CLI）或 2（GUI）；platform 为平台标识。未发现更新时版本字段为空。latest 是 Go SDK 计算结果，不是服务端返回字段。
+      operationId: GetVersion
+      responses:
+        "200":
+          description: HTTP 200 响应；code=0 时 data 为业务数据，非零时为业务错误。
+          schema:
+            $ref: '#/definitions/code_sign_api.HttpGetVersionResp'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/code_sign_api.GetVersionReq'
+      tags:
+        - 代码签名
+  /v1/codesign/login:
+    post:
+      summary: 登录
+      description: 校验 Basic Auth 凭证并返回用户名，不创建会话。请求可使用空 JSON 对象。
+      operationId: Login
+      responses:
+        "200":
+          description: HTTP 200 响应；code=0 时 data 为业务数据，非零时为业务错误。
+          schema:
+            $ref: '#/definitions/code_sign_api.HttpLoginResp'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/code_sign_api.LoginReq'
+      tags:
+        - 代码签名
+      security:
+        - BasicAuth: []
+  /v1/codesign/cert:
+    post:
+      summary: 获取代码签名证书
+      description: 根据证书主订阅号获取 PEM 编码的签名证书及证书链，不返回私钥。
+      operationId: GetCert
+      responses:
+        "200":
+          description: HTTP 200 响应；code=0 时 data 为业务数据，非零时为业务错误。
+          schema:
+            $ref: '#/definitions/code_sign_api.HttpGetCertResp'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/code_sign_api.GetCertReq'
+      tags:
+        - 代码签名
+      security:
+        - BasicAuth: []
+  /v1/codesign/certs:
+    post:
+      summary: 获取代码签名证书列表（已签发）
+      description: 查询一页已签发证书，page 和 limit 位于请求顶层。limit<=0 时按 9999 条查询；SDK 不自动遍历分页。
+      operationId: ListCert
+      responses:
+        "200":
+          description: HTTP 200 响应；code=0 时 data 为业务数据，非零时为业务错误。
+          schema:
+            $ref: '#/definitions/code_sign_api.HttpListCertResp'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/code_sign_api.ListCertReq'
+      tags:
+        - 代码签名
+      security:
+        - BasicAuth: []
+  /v1/codesign/records:
+    post:
+      summary: 获取签名记录
+      description: 查询一页签名记录。code、startAt、endAt 为可选筛选条件，时间使用 RFC3339 字符串。id 为十进制字符串，extra 使用 lowerCamelCase 字段名。
+      operationId: ListRecord
+      responses:
+        "200":
+          description: HTTP 200 响应；code=0 时 data 为业务数据，非零时为业务错误。
+          schema:
+            $ref: '#/definitions/code_sign_api.HttpListRecordResp'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/code_sign_api.ListRecordReq'
+      tags:
+        - 代码签名
+      security:
+        - BasicAuth: []
+  /v1/codesign/sign:
+    post:
+      summary: 签名
+      description: 原始哈希签名时提供 algorithm 和 padding，digest 为哈希原始字节的 Base64 编码，不是完整文件内容或十六进制摘要。接口支持 SHA1、SHA256、SHA384、SHA512，RSA 填充为 PKCS1；解码后的哈希长度应分别为 20、32、48、64 字节。algorithm 和 padding 未同时提供时走旧签名模式，其 method、desc、url 和 sha1、sha2 字段不属于原始哈希签名流程。成功会消耗签名额度；超时或响应解析失败时服务端可能已完成签名，不要盲目重试。extra 中平台、版本和主机名由调用方提供，Go SDK 会补齐空值；请求可使用 signing_filename、signing_filesize，响应使用 signingFilename、signingFilesize。
+      operationId: Sign
+      responses:
+        "200":
+          description: HTTP 200 响应；code=0 时 data 为业务数据，非零时为业务错误。
+          schema:
+            $ref: '#/definitions/code_sign_api.HttpSignResp'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/code_sign_api.SignReq'
+      tags:
+        - 代码签名
+      security:
+        - BasicAuth: []
+  /v1/codesign/report-sign:
+    post:
+      summary: 报告签名结果
+      description: 上报客户端处理结果，id 为 Sign 返回的十进制记录 ID。status 为 0（待处理）、1（成功）或 2（失败），Go SDK 仅允许上报 1 或 2。上报不改变签名计次；成功的 data 为空对象。
+      operationId: ReportSign
+      responses:
+        "200":
+          description: HTTP 200 响应；code=0 时 data 为业务数据，非零时为业务错误。
+          schema:
+            $ref: '#/definitions/code_sign_api.HttpReportSignResp'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/code_sign_api.ReportSignReq'
+      tags:
+        - 代码签名
+      security:
+        - BasicAuth: []
+definitions:
+  code_sign_api.GetCertReq:
+    type: object
+    properties:
+      code:
+        type: string
+        title: 主订阅号
+  code_sign_api.GetCertResp:
+    type: object
+    properties:
+      pem:
+        type: string
+        title: 证书 pem
+  code_sign_api.GetVersionReq:
+    type: object
+    properties:
+      type:
+        type: integer
+        format: int32
+        title: 客户端类型：1 为 CLI，2 为 GUI。
+      platform:
+        type: string
+        title: 客户端平台，例如 darwin/amd64、darwin/arm64、linux/amd64、linux/arm64、windows/amd64。
+      current:
+        type: string
+        title: 当前版本
+    required:
+      - type
+      - platform
+  code_sign_api.GetVersionResp:
+    type: object
+    properties:
+      version:
+        type: string
+        title: 最新版本
+      url:
+        type: string
+        title: 下载地址
+      size:
+        type: integer
+        format: int32
+        title: 大小
+      sha256:
+        type: string
+        title: 校验码
+      note:
+        type: string
+        title: 更新公告
+      force:
+        type: boolean
+        title: 强制更新
+  code_sign_api.HttpGetCertResp:
+    type: object
+    properties:
+      code:
+        type: integer
+        format: int32
+        title: 业务状态码，0 表示成功，非零表示失败。
+      message:
+        type: string
+        title: 业务结果说明。
+      data:
+        $ref: '#/definitions/code_sign_api.GetCertResp'
+        title: 成功时的业务数据，错误时可能为空或缺失。
+      errors:
+        type: object
+        title: 字段错误详情，成功时为 null。
+      request_id:
+        type: string
+        title: 请求追踪 ID，错误时可能缺失。
+    title: 证书查询响应
+  code_sign_api.HttpGetVersionResp:
+    type: object
+    properties:
+      code:
+        type: integer
+        format: int32
+        title: 业务状态码，0 表示成功，非零表示失败。
+      message:
+        type: string
+        title: 业务结果说明。
+      data:
+        $ref: '#/definitions/code_sign_api.GetVersionResp'
+        title: 成功时的业务数据，错误时可能为空或缺失。
+      errors:
+        type: object
+        title: 字段错误详情，成功时为 null。
+      request_id:
+        type: string
+        title: 请求追踪 ID，错误时可能缺失。
+    title: 客户端版本查询响应
+  code_sign_api.HttpListCertResp:
+    type: object
+    properties:
+      code:
+        type: integer
+        format: int32
+        title: 业务状态码，0 表示成功，非零表示失败。
+      message:
+        type: string
+        title: 业务结果说明。
+      data:
+        $ref: '#/definitions/code_sign_api.ListCertResp'
+        title: 成功时的业务数据，错误时可能为空或缺失。
+      errors:
+        type: object
+        title: 字段错误详情，成功时为 null。
+      request_id:
+        type: string
+        title: 请求追踪 ID，错误时可能缺失。
+    title: 证书列表响应
+  code_sign_api.HttpListRecordResp:
+    type: object
+    properties:
+      code:
+        type: integer
+        format: int32
+        title: 业务状态码，0 表示成功，非零表示失败。
+      message:
+        type: string
+        title: 业务结果说明。
+      data:
+        $ref: '#/definitions/code_sign_api.ListRecordResp'
+        title: 成功时的业务数据，错误时可能为空或缺失。
+      errors:
+        type: object
+        title: 字段错误详情，成功时为 null。
+      request_id:
+        type: string
+        title: 请求追踪 ID，错误时可能缺失。
+    title: 签名记录列表响应
+  code_sign_api.HttpLoginResp:
+    type: object
+    properties:
+      code:
+        type: integer
+        format: int32
+        title: 业务状态码，0 表示成功，非零表示失败。
+      message:
+        type: string
+        title: 业务结果说明。
+      data:
+        $ref: '#/definitions/code_sign_api.LoginResp'
+        title: 成功时的业务数据，错误时可能为空或缺失。
+      errors:
+        type: object
+        title: 字段错误详情，成功时为 null。
+      request_id:
+        type: string
+        title: 请求追踪 ID，错误时可能缺失。
+    title: 凭证校验响应
+  code_sign_api.HttpReportSignResp:
+    type: object
+    properties:
+      code:
+        type: integer
+        format: int32
+        title: 业务状态码，0 表示成功，非零表示失败。
+      message:
+        type: string
+        title: 业务结果说明。
+      data:
+        $ref: '#/definitions/code_sign_api.ReportSignResp'
+        title: 成功时的业务数据，错误时可能为空或缺失。
+      errors:
+        type: object
+        title: 字段错误详情，成功时为 null。
+      request_id:
+        type: string
+        title: 请求追踪 ID，错误时可能缺失。
+    title: 客户端处理结果上报响应
+  code_sign_api.HttpSignResp:
+    type: object
+    properties:
+      code:
+        type: integer
+        format: int32
+        title: 业务状态码，0 表示成功，非零表示失败。
+      message:
+        type: string
+        title: 业务结果说明。
+      data:
+        $ref: '#/definitions/code_sign_api.SignResp'
+        title: 成功时的业务数据，错误时可能为空或缺失。
+      errors:
+        type: object
+        title: 字段错误详情，成功时为 null。
+      request_id:
+        type: string
+        title: 请求追踪 ID，错误时可能缺失。
+    title: 签名响应
+  code_sign_api.ListCertReq:
+    type: object
+    properties:
+      page:
+        type: integer
+        format: int32
+        title: 页码
+      limit:
+        type: integer
+        format: int32
+        title: 页大小
+  code_sign_api.ListCertResp:
+    type: object
+    properties:
+      page:
+        type: integer
+        format: int32
+        title: 页码
+      limit:
+        type: integer
+        format: int32
+        title: 页大小
+      total:
+        type: integer
+        format: int32
+        title: 总数
+      pages:
+        type: integer
+        format: int32
+        title: 总页数
+      records:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/code_sign_api.ListCertResp.Cert'
+        title: 证书列表
+  code_sign_api.ListCertResp.Cert:
+    type: object
+    properties:
+      code:
+        type: string
+        title: 主订阅号
+      productName:
+        type: string
+        title: 证书产品名称
+      certCommonName:
+        type: string
+        title: 证书通用名称
+      certSubject:
+        type: string
+        title: 证书主题
+      quotaTotal:
+        type: integer
+        format: int32
+        title: 签名额度
+      quotaUsed:
+        type: integer
+        format: int32
+        title: 签名已使用
+      startAt:
+        type: string
+        format: date-time
+        title: 开始时间
+      endAt:
+        type: string
+        format: date-time
+        title: 结束时间
+  code_sign_api.ListRecordReq:
+    type: object
+    properties:
+      page:
+        type: integer
+        format: int32
+        title: 页码
+      limit:
+        type: integer
+        format: int32
+        title: 页大小
+      code:
+        type: string
+        title: 主订阅号
+      startAt:
+        type: string
+        format: date-time
+        title: 开始时间
+      endAt:
+        type: string
+        format: date-time
+        title: 结束时间
+  code_sign_api.ListRecordResp:
+    type: object
+    properties:
+      page:
+        type: integer
+        format: int32
+        title: 页码
+      limit:
+        type: integer
+        format: int32
+        title: 页大小
+      total:
+        type: integer
+        format: int32
+        title: 总数
+      pages:
+        type: integer
+        format: int32
+        title: 总页数
+      records:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/code_sign_api.ListRecordResp.Record'
+        title: 签名记录列表
+  code_sign_api.ListRecordResp.Record:
+    type: object
+    properties:
+      id:
+        type: string
+        format: uint64
+        title: id
+      code:
+        type: string
+        title: 主订阅号
+      method:
+        type: integer
+        format: int32
+        title: 签名方法 0-BOTH 1-SHA1 2-SHA2
+      status:
+        type: integer
+        format: int32
+        title: 状态 0-签名中 1-成功 2-失败
+      took:
+        type: integer
+        format: int32
+        title: 耗时（秒）
+      clientStatus:
+        type: integer
+        format: int32
+        title: 客户端状态 0-待处理 1-成功 2-失败
+      extra:
+        $ref: '#/definitions/code_sign_api.SignExtra'
+        title: 额外信息
+      createdAt:
+        type: string
+        format: date-time
+        title: 创建时间
+  code_sign_api.LoginReq:
+    type: object
+  code_sign_api.LoginResp:
+    type: object
+    properties:
+      name:
+        type: string
+        title: 用户名
+  code_sign_api.ReportSignReq:
+    type: object
+    properties:
+      id:
+        type: string
+        format: uint64
+        title: Sign 返回的签名记录 ID，HTTP JSON 中为十进制字符串。
+      status:
+        type: integer
+        format: int32
+        title: 状态 0-待处理 1-成功 2-失败
+    required:
+      - id
+  code_sign_api.ReportSignResp:
+    type: object
+  code_sign_api.SignExtra:
+    type: object
+    properties:
+      platform:
+        type: string
+        title: 操作平台
+      version:
+        type: string
+        title: 版本
+      remoteIp:
+        type: string
+        title: 客户端 IP，由服务端写入
+        readOnly: true
+      hostname:
+        type: string
+        title: 主机名
+      signingFilename:
+        type: string
+        title: 签名文件名
+      signingFilesize:
+        type: integer
+        format: int32
+        title: 签名文件大小
+      accessKey:
+        type: string
+        title: Access Key 标识，由服务端写入，不包含 Access Secret
+        readOnly: true
+      userAgent:
+        type: string
+        title: 用户代理，由服务端写入
+        readOnly: true
+  code_sign_api.SignReq:
+    type: object
+    properties:
+      code:
+        type: string
+        title: 签名证书主订阅号。
+      digest:
+        type: string
+        title: 原始哈希签名模式使用哈希字节的 Base64 编码；SHA1、SHA256、SHA384、SHA512 分别为 20、32、48、64 字节。
+      method:
+        type: integer
+        format: int32
+        title: 签名方法 0-BOTH 1-SHA1 2-SHA2
+      timestamp:
+        type: string
+        title: 签名时间戳（废弃，时间戳签名移至客户端）
+      timestampRfc3161:
+        type: string
+        title: 签名时间戳（废弃，时间戳签名移至客户端）
+      desc:
+        type: string
+        title: 内容描述
+      url:
+        type: string
+        title: 信息 URL
+      algorithm:
+        type: string
+        title: 原始哈希签名算法，接口支持 SHA1、SHA256、SHA384、SHA512；须与 padding 同时提供。
+      padding:
+        type: string
+        title: 原始哈希签名的 RSA 填充方式，当前为 PKCS1；须与 algorithm 同时提供。
+      extra:
+        $ref: '#/definitions/code_sign_api.SignExtra'
+        title: 额外信息
+    required:
+      - code
+      - digest
+  code_sign_api.SignResp:
+    type: object
+    properties:
+      id:
+        type: string
+        format: uint64
+        title: id
+      sha1:
+        type: string
+        title: 旧签名模式的 SHA1 签名结果。
+      sha2:
+        type: string
+        title: 旧签名模式的 SHA2 签名结果。
+      signature:
+        type: string
+        title: 原始哈希签名模式的 RSA PKCS#1 签名结果，使用 Base64 编码。
+securityDefinitions:
+  BasicAuth:
+    type: basic
+    description: 用户名为 Access Key，密码为 Access Secret。

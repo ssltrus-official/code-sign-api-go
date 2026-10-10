@@ -76,6 +76,12 @@ if err != nil {
 _ = certs
 ```
 
+## Swagger 文档
+
+将 [docs/api.swagger.yaml](docs/api.swagger.yaml) 导入 Swagger UI、Swagger Editor
+或 Apifox 查看 HTTP API 文档。
+认证方式和签名约束见[文档使用说明](docs/README.md)。
+
 ## 原始哈希签名
 
 签名契约见[公开 API 参考](https://help.racent.com/zh/remote-code-signing/integration-guide/codesign-api-reference/)。
