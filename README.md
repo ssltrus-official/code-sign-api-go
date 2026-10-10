@@ -80,7 +80,7 @@ _ = certs
 ## Raw hash signing
 
 See the [public API reference](https://help.racent.com/zh/remote-code-signing/integration-guide/codesign-api-reference/) for the signing contract.
-The SDK exposes raw hash signing only; it does not expose osslsigncode's `method/desc/url` request fields or `sha1/sha2` response fields.
+The SDK exposes raw hash signing.
 
 Compute the hash according to the file format and signing tool requirements, then Base64-encode the raw hash bytes.
 The SDK does not hash or read files, attach signatures, or request timestamps.

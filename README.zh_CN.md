@@ -79,7 +79,7 @@ _ = certs
 ## 原始哈希签名
 
 签名契约见[公开 API 参考](https://help.racent.com/zh/remote-code-signing/integration-guide/codesign-api-reference/)。
-SDK 仅封装原始哈希签名，不提供 osslsigncode 的 `method/desc/url` 请求或 `sha1/sha2` 返回字段。
+SDK 封装原始哈希签名。
 
 调用方须按文件格式和签名工具要求计算哈希，再将哈希原始字节编码为 Base64。
 SDK 不计算文件摘要、不读取文件、不附加签名或时间戳。
