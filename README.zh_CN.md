@@ -5,7 +5,7 @@
 [![CI](https://github.com/ssltrus-official/code-sign-api-go/actions/workflows/golang.yml/badge.svg)](https://github.com/ssltrus-official/code-sign-api-go/actions/workflows/golang.yml)
 [![Go Reference](https://pkg.go.dev/badge/github.com/ssltrus-official/code-sign-api-go.svg)](https://pkg.go.dev/github.com/ssltrus-official/code-sign-api-go)
 
-SSLTrus 远程代码签名 Go API 客户端，要求 Go 1.26.0 或更高版本。
+sslTrus 远程代码签名 Go API 客户端，要求 Go 1.26.0 或更高版本。
 直接依赖仅为 [Resty v2](https://github.com/go-resty/resty)，其间接依赖由 Go modules 管理。
 
 ## 安装与初始化

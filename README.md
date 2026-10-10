@@ -5,7 +5,7 @@
 [![CI](https://github.com/ssltrus-official/code-sign-api-go/actions/workflows/golang.yml/badge.svg)](https://github.com/ssltrus-official/code-sign-api-go/actions/workflows/golang.yml)
 [![Go Reference](https://pkg.go.dev/badge/github.com/ssltrus-official/code-sign-api-go.svg)](https://pkg.go.dev/github.com/ssltrus-official/code-sign-api-go)
 
-Go API client for SSLTrus remote code signing. Requires Go 1.26.0 or later.
+Go API client for sslTrus remote code signing. Requires Go 1.26.0 or later.
 The only direct dependency is [Resty v2](https://github.com/go-resty/resty); Go modules manage its transitive dependencies.
 
 ## Installation and initialization
