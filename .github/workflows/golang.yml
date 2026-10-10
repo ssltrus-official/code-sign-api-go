@@ -26,7 +26,6 @@ jobs:
         uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
-          cache: true
       - name: Tidy
         run: make tidy
       - name: Verify tidiness
@@ -37,9 +36,6 @@ jobs:
         run: make vet
       - name: Lint
         uses: golangci/golangci-lint-action@v9
-        with:
-          version: v2.14.0
-          args: --config .golangci.yml
       - name: Compile
         run: make compile
       - name: Install gotestsum
